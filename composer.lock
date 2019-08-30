@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "a3a0dd34a1041d82e9ae61cb7df5da98",
+    "content-hash": "ace789fc3709f0f48543b95997af05d8",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -3968,16 +3968,16 @@
         },
         {
             "name": "tymon/jwt-auth",
-            "version": "1.0.0-rc.4.1",
+            "version": "dev-develop",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tymondesigns/jwt-auth.git",
-                "reference": "63698d304554e5d0bc3eb481cc260a9fc900e151"
+                "reference": "6e9457185ef4e4ff52eb54a73a64be58aa46847b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tymondesigns/jwt-auth/zipball/63698d304554e5d0bc3eb481cc260a9fc900e151",
-                "reference": "63698d304554e5d0bc3eb481cc260a9fc900e151",
+                "url": "https://api.github.com/repos/tymondesigns/jwt-auth/zipball/6e9457185ef4e4ff52eb54a73a64be58aa46847b",
+                "reference": "6e9457185ef4e4ff52eb54a73a64be58aa46847b",
                 "shasum": ""
             },
             "require": {
@@ -4039,7 +4039,7 @@
                 "jwt",
                 "laravel"
             ],
-            "time": "2019-03-14T20:29:20+00:00"
+            "time": "2019-07-11T18:40:09+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
@@ -5931,7 +5931,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "tymon/jwt-auth": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

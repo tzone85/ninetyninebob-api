@@ -4,20 +4,9 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\Contracts\Providers\Auth;
-use Tymon\JWTAuth\JWTAuth;
 
 class AuthController extends Controller
 {
-    /**
-     * @var JWTAuth
-     */
-    private $jwt;
-
-    public function __construct(JWTAuth $jwt)
-    {
-        $this->jwt = $jwt;
-    }
 
     public function register(Request $request)
     {
@@ -36,7 +25,7 @@ class AuthController extends Controller
     {
         $credentials = request(['email', 'password']);
         \Log::info(json_encode($credentials));
-        if (!$token = $this->jwt->attempt($credentials)) {
+        if (!$token = \JWTAuth::attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
