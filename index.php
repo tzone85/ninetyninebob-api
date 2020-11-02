@@ -1,31 +1,18 @@
 <?php
+
+    require('userValidator.php');
     
-    class Weather {
-
-        public static $tempConditions = ['cold', 'mild', 'warm'];
+    if (isset($_POST['submit'])) {
         
-        public static function celsiusToFarenheit($celsius) {
+        $validation = new UserValidator($_POST);
 
-            return $celsius * 9 / 5 + 32;
-        }
+        $errors = $validation->validateForm();
 
-        public static function determineTemperatureConditions($farenheits) {
-            if ($farenheits < 40) {
+        // save data to database if no errors
 
-                return self::$tempConditions[0];
 
-            }else if ($farenheits < 70) {
-                return self::$tempConditions[1];
-            } else {
-                return self::$tempConditions[3];
-            }
-            
-        }
     }
 
-    // print_r(Weather::$tempConditions);
-    // echo Weather::celsiusToFarenheit(20);
-    echo Weather::determineTemperatureConditions(40);
 ?>
 
 <!DOCTYPE html>
@@ -34,8 +21,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PHP OOP Tutorial</title>
+    <link rel="stylesheet" type = "text/css" href="styles.css">
 </head>
 <body>
+    <div class="new-user">
+        <h2>Create new user</h2>
+        <form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST">
+            <label>Username:</label>
+            <input type="text" name="username" value="<?php echo htmlspecialchars($_POST['username']) ?? '' ?>">
+            <div class="error">
+                <?php echo $errors['username'] ?? '' ?>
+            </div>
+
+            <label>Email:</label>
+            <input type="text" name="email" value="<?php echo htmlspecialchars($_POST['email']) ?? '' ?>">
+            <div class="error">
+                <?php echo $errors['email'] ?? '' ?>
+            </div>
+
+            <input type="submit" value="submit" name="submit">
+        </form>
+    </div>
 
 </body>
 </html>
