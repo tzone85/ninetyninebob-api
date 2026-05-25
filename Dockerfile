@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.7
 
 # Stage 1: composer install (cacheable)
-FROM composer:2 AS vendor
+# Composer 2 on PHP 8.4 — must match the lock floor (symfony/* v8 requires PHP 8.4)
+FROM composer:2.8 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 # Need full source for post-install scripts (artisan package:discover)
@@ -9,7 +10,7 @@ COPY . .
 RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader
 
 # Stage 2: PHP-FPM runtime
-FROM php:8.3-fpm-alpine AS runtime
+FROM php:8.4-fpm-alpine AS runtime
 
 RUN apk add --no-cache nginx supervisor curl bash icu-dev libpng-dev libxml2-dev libzip-dev oniguruma-dev \
     postgresql-dev postgresql-libs \
