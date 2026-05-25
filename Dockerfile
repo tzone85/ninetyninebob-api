@@ -4,10 +4,9 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
-COPY database/migrations database/migrations
-COPY database/factories database/factories
-COPY database/seeders database/seeders
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-progress
+# Need full source for post-install scripts (artisan package:discover)
+COPY . .
+RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader
 
 # Stage 2: PHP-FPM runtime
 FROM php:8.3-fpm-alpine AS runtime
@@ -25,8 +24,7 @@ COPY . /var/www/html
 
 # Permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache \
-    && composer dump-autoload --no-dev --optimize --working-dir=/var/www/html
+    && chmod -R 775 storage bootstrap/cache
 
 # nginx + supervisord config
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
