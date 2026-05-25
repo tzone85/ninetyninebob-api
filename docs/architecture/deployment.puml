@@ -1,0 +1,26 @@
+@startuml deployment
+title Deployment — api + postgres via compose
+
+skinparam shadowing false
+
+cloud Clients
+node "Docker host" {
+  node "api :8080" {
+    [nginx :8080] as nginx
+    [php-fpm :9000\n(Laravel 11 / PHP 8.3)] as fpm
+  }
+  database "postgres :5432" as pg {
+    folder "pgdata\n(volume)"
+  }
+}
+
+Clients --> nginx : HTTPS
+nginx --> fpm : fastcgi
+fpm --> pg : DB_HOST=postgres
+note right of fpm
+  supervisord runs nginx + php-fpm
+  in one container. App is also
+  fine behind any reverse proxy
+  in production.
+end note
+@enduml

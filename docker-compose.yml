@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ninetyninebob
+      POSTGRES_PASSWORD: ninetyninebob
+      POSTGRES_DB: ninetyninebob
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ninetyninebob"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      APP_KEY: ${APP_KEY:-base64:K1cGvX0G7ZkXfZ8RrtZcQHcjj2Q0RXqfXz0kQ8gN+Yo=}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ninetyninebob
+      DB_USERNAME: ninetyninebob
+      DB_PASSWORD: ninetyninebob
+      LOG_CHANNEL: stderr
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        php artisan migrate --force &&
+        supervisord -c /etc/supervisord.conf -n
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:

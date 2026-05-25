@@ -1,0 +1,44 @@
+@startuml component
+title ninetyninebob-api — Component Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor Client
+
+package "app/" {
+  [routes/api.php\n(register/login/me/logout)] as routes
+  [AuthController] as auth
+  [RegisterRequest / LoginRequest\n(FormRequest validation)] as req
+  [User model\n(HasApiTokens + Notifiable)] as user
+}
+
+package "vendor (Laravel 11)" {
+  [Sanctum guard\nauth:sanctum middleware] as sanctum
+  [PersonalAccessToken] as pat
+  [Hash facade\n(bcrypt)] as hash
+}
+
+database "PostgreSQL\n(users + personal_access_tokens)" as db
+
+Client --> routes : POST /api/register|/login\nGET /api/me|/user\nPOST /api/logout
+routes --> req : validate body
+routes --> auth
+auth --> user : create / findByEmail
+auth --> hash : Hash::make password
+auth --> pat : createToken / findToken / delete
+sanctum --> pat : look up bearer
+pat --> db
+user --> db
+
+note bottom of auth
+  Bug fixes vs original:
+  - register hashes via Hash::make (was a model
+    mutator that could be bypassed)
+  - login no longer logs raw credentials
+  - login returns generic 'Invalid credentials.'
+    instead of leaking unauth state
+  - logout uses bearerToken() fallback when
+    currentAccessToken() is a TransientToken
+end note
+@enduml

@@ -1,0 +1,44 @@
+@startuml sequence_login
+title Sequence — POST /api/login + GET /api/me
+
+skinparam shadowing false
+
+actor Client
+participant "AuthController" as Auth
+participant "LoginRequest" as Req
+participant "Auth::attempt" as AuthSvc
+participant "User" as User
+participant "PersonalAccessToken" as Pat
+participant "auth:sanctum" as Mw
+
+Client -> Auth : POST /api/login {email, password}
+Auth -> Req : validate
+alt invalid body
+  Req --> Auth : ValidationException
+  Auth --> Client : 422
+else valid
+  Req --> Auth : ok
+  Auth -> AuthSvc : attempt(credentials)
+  alt mismatch
+    AuthSvc --> Auth : false
+    Auth --> Client : 422 {email: 'Invalid credentials.'}
+  else match
+    AuthSvc --> Auth : true
+    Auth -> User : find by email
+    Auth -> Pat : createToken('api')
+    Pat --> Auth : {plainTextToken}
+    Auth --> Client : 200 {user, access_token, token_type:'Bearer'}
+  end
+end
+
+== later ==
+
+Client -> Mw : GET /api/me with Authorization: Bearer <token>
+Mw -> Pat : findToken(bearer)
+alt missing / revoked
+  Mw --> Client : 401
+else found
+  Mw -> Auth : forward (req.user set)
+  Auth --> Client : 200 {user}
+end
+@enduml

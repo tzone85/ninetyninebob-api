@@ -2,49 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\User;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
-
-    public function register(Request $request)
+    public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
+            'name' => $request->validated('name'),
+            'email' => $request->validated('email'),
+            'password' => Hash::make($request->validated('password')),
         ]);
 
-        $token = auth()->login($user);
+        $token = $user->createToken('api')->plainTextToken;
 
-        return $this->respondWithToken($token);
+        return response()->json([
+            'user' => $user->only(['id', 'name', 'email']),
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ], 201);
     }
 
-    public function login()
+    public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = request(['email', 'password']);
-        \Log::info(json_encode($credentials));
-        if (!$token = \JWTAuth::attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        $credentials = $request->validated();
+
+        if (! Auth::attempt($credentials)) {
+            // Generic message — no username enumeration.
+            throw ValidationException::withMessages([
+                'email' => ['Invalid credentials.'],
+            ]);
         }
 
-        return $this->respondWithToken($token);
+        /** @var User $user */
+        $user = $request->user() ?: User::where('email', $credentials['email'])->firstOrFail();
+        $token = $user->createToken('api')->plainTextToken;
+
+        return response()->json([
+            'user' => $user->only(['id', 'name', 'email']),
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
     }
 
-    public function logout()
+    public function logout(Request $request): JsonResponse
     {
-        auth()->logout();
+        // Prefer the current token, but fall back to looking it up from the
+        // bearer header when `currentAccessToken()` returns a TransientToken
+        // (cookie auth) or null.
+        $current = $request->user()?->currentAccessToken();
+        if ($current instanceof PersonalAccessToken) {
+            $current->delete();
+        } else {
+            $bearer = $request->bearerToken();
+            if ($bearer !== null) {
+                PersonalAccessToken::findToken($bearer)?->delete();
+            }
+        }
 
         return response()->json(['message' => 'Successfully logged out']);
     }
 
-    protected function respondWithToken($token)
+    public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL()*60
+            'user' => $request->user()->only(['id', 'name', 'email']),
         ]);
     }
 }
